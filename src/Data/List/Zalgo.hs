@@ -1,20 +1,3 @@
-module Data.List.Zalgo
-    (
-        zFun,
-        isInfixOf,
-        indexOf,
-
-        zFunBy,
-        isInfixBy,
-        indexBy,
-
-        genericZFun,
-        genericIndexOf,
-
-        genericZFunBy,
-        genericIndexBy
-    )
-    where
 --------------------------------------------------------------------------------
 -- |
 -- Module: Data.List.Zalgo
@@ -42,6 +25,24 @@ module Data.List.Zalgo
 -- The marked substrings are equal, hence the value at the marked location is
 -- their length, 4.
 --------------------------------------------------------------------------------
+
+module Data.List.Zalgo
+    (
+        zFun,
+        isInfixOf,
+        indexOf,
+
+        zFunBy,
+        isInfixBy,
+        indexBy,
+
+        genericZFun,
+        genericIndexOf,
+
+        genericZFunBy,
+        genericIndexBy
+    )
+    where
 
 import Data.List hiding (isInfixOf)
 import Data.Maybe

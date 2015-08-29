@@ -1,5 +1,5 @@
 name:                zalgo
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Z-algorithm implemented on haskell's built-in cons-cell-based lists.
 description:         
     A few efficient list-processing functions using the Z-function, which is
@@ -31,7 +31,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Data.List.Zalgo, Data.List.Zalgo.Internal
-  build-depends:       base >=4.8 && <4.9
+  build-depends:       base == 4.*
   hs-source-dirs:      src
   default-language:    Haskell2010
 
