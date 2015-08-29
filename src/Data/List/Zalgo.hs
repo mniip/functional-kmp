@@ -1,11 +1,11 @@
 --------------------------------------------------------------------------------
 -- |
--- Module: Data.List.Zalgo
--- Copyright: (C) 2015 mniip
--- Maintainer: mniip <mniip@mniip.com>
--- License: BSD3
--- Portability: portable
--- Stability: experimental
+-- Module      :  Data.List.Zalgo
+-- Copyright   :  (C) 2015 mniip
+-- Maintainer  :  mniip <mniip@mniip.com>
+-- License     :  BSD3
+-- Portability :  portable
+-- Stability   :  experimental
 --
 -- A few efficient list-processing functions using the Z-function, which is
 -- defined as:
@@ -32,10 +32,14 @@ module Data.List.Zalgo
         isInfixOf,
         indexOf,
 
+        -- * Custom predicates
+        -- $predicates
         zFunBy,
         isInfixBy,
         indexBy,
 
+        -- * Generic functions
+        -- $generic
         genericZFun,
         genericIndexOf,
 
@@ -51,16 +55,16 @@ import Data.List.Zalgo.Internal
 joinLists :: [a] -> [a] -> [Maybe a]
 joinLists n h = map Just n ++ Nothing:map Just h
 
--- | _O(N)._ Compute the Z-function for a list.
+-- | /O(N)./ Compute the Z-function for a list.
 zFun :: Eq a => [a] -> [Int]
 zFun xs = map zLength $ zTraverse xs
 
--- | _O(N+H)._ @isInfixOf needle haystack@ tests whether needle is fully
+-- | /O(N+H)./ @isInfixOf needle haystack@ tests whether needle is fully
 -- contained somewhere in haystack.
 isInfixOf :: Eq a => [a] -> [a] -> Bool
 isInfixOf n h = isJust $ indexOf n h
 
--- | _O(N+H)._ @indexOf needle haystack@ returns the index at which needle
+-- | /O(N+H)./ @indexOf needle haystack@ returns the index at which needle
 -- is found in haystack, or Nothing if it's not.
 indexOf :: Eq a => [a] -> [a] -> Maybe Int
 indexOf n h = go $ zFun $ joinLists n h
@@ -71,8 +75,9 @@ indexOf n h = go $ zFun $ joinLists n h
             | l == ln = Just (-l-l)
             | otherwise = fmap (+ 1) $ go ls
 
--- | == Custom predicates
--- The '...By' set of functions takes a custom equality predicate, and due to
+-- $predicates
+--
+-- The @...By@ set of functions takes a custom equality predicate, and due to
 -- the optimized nature of the algorithm, passed predicate must conform to
 -- some laws:
 -- 
@@ -83,17 +88,17 @@ indexOf n h = go $ zFun $ joinLists n h
 --
 -- If these laws do not hold, the behavior is undefined.
 
--- | _O(N) and O(N) calls to the predicate._ Compute the Z-function using a
+-- | /O(N) and O(N) calls to the predicate./ Compute the Z-function using a
 -- custom equality predicate.
 zFunBy :: (a -> a -> Bool) -> [a] -> [Int]
 zFunBy eq xs = map zLength $ zTraverseBy eq xs
 
--- | _O(N+H) and O(N+H) calls to the predicate._ Compute 'isInfixOf' using a
+-- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'isInfixOf' using a
 -- custom equality predicate.
 isInfixBy :: (a -> a -> Bool) -> [a] -> [a] -> Bool
 isInfixBy eq n h = isJust $ indexBy eq n h
 
--- | _O(N+H) and O(N+H) calls to the predicate._ Compute 'indexOf' using a
+-- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'indexOf' using a
 -- cusom equality predicate.
 indexBy :: (a -> a -> Bool) -> [a] -> [a] -> Maybe Int
 indexBy eq n h = go $ zFunBy (maybeEq eq) $ joinLists n h
@@ -106,7 +111,8 @@ indexBy eq n h = go $ zFunBy (maybeEq eq) $ joinLists n h
         maybeEq eq (Just x) (Just y) = x `eq` y
         maybeEq _ _ _ = False
 
--- | == Generic functions
+-- $generic
+--
 -- Some of the functions are generalized over the type of the numbers they
 -- return, but keep in mind that the amount of arithmetic operations is linear.
 
