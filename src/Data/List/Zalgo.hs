@@ -2,10 +2,10 @@
 -- |
 -- Module      :  Data.List.Zalgo
 -- Copyright   :  (C) 2015 mniip
--- Maintainer  :  mniip <mniip@mniip.com>
 -- License     :  BSD3
--- Portability :  portable
+-- Maintainer  :  mniip <mniip@mniip.com>
 -- Stability   :  experimental
+-- Portability :  portable
 --
 -- A few efficient list-processing functions using the Z-function, which is
 -- defined as:

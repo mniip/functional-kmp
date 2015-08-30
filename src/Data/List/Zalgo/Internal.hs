@@ -2,10 +2,10 @@
 -- |
 -- Module      :  Data.List.Zalgo.Internal
 -- Copyright   :  (C) 2015 mniip
--- Maintainer  :  mniip <mniip@mniip.com>
 -- License     :  BSD3
--- Portability :  portable
+-- Maintainer  :  mniip <mniip@mniip.com>
 -- Stability   :  experimental
+-- Portability :  portable
 --
 -- Implementation of the Z-function on cons-cells.
 --
@@ -34,13 +34,13 @@ import Data.Maybe
 -- input at the state's position, 'zLength' is the value of the Z-function, and
 -- 'zPrev' is a reference to the list of 'ZState's starting from position
 -- described by 'zLength'.
-data ZState a = ZState { zTail :: [a], zLength :: !Int, zPrev :: [ZState a] }
+data ZState a = ZState { zTail :: [a], zLength :: Int, zPrev :: [ZState a] }
 
 -- | /O(N)./ Compute the list of Z-function states for a given input.
 zTraverse :: Eq a => [a] -> [ZState a]
 zTraverse [] = []
 zTraverse xw@(_:xs) = let
-        pz = ZState{zTail = xw, zLength = 0, zPrev = pzs}
+        pz = ZState{zTail = xw, zLength = error "nil", zPrev = pzs}
         z = ZState{zTail = xs, zLength = 0, zPrev = pzs}
         pzs = pz:zs
         zs = z:go z xs
