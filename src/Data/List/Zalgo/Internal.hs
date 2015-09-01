@@ -7,11 +7,11 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- Implementation of the Z-function on cons-cells.
+-- Implementation of the prefix-function on cons-cells.
 --
--- Z-function has a simple implementation using arrays, the challenge, however
--- was to implement it on haskell lists (which are cons cells) without losing
--- any complexity. The following code uses a tying-the-knot data passing
+-- prefix-function has a simple implementation using arrays, the challenge,
+-- however was to implement it on haskell lists (which are cons cells) without
+-- losing any complexity. The following code uses a tying-the-knot data passing
 -- structure, however no complicated laziness mechanisms are used: a 'ZState'
 -- only depends on previous 'ZState's and therefore this algorithm can be safely
 -- implemented in a strict language with pointers.
@@ -31,16 +31,16 @@ module Data.List.Zalgo.Internal
 import Data.Maybe
 
 -- | A state of the Z-function computation. 'zTail' points to the tail of the
--- input at the state's position, 'zLength' is the value of the Z-function, and
--- 'zPrev' is a reference to the list of 'ZState's starting from position
+-- input at the state's position, 'zLength' is the value of the prefix-function,
+-- and 'zPrev' is a reference to the list of 'ZState's starting from position
 -- described by 'zLength'.
-data ZState a = ZState { zTail :: [a], zLength :: Int, zPrev :: [ZState a] }
+data ZState a = ZState { zTail :: [a], zLength :: !Int, zPrev :: [ZState a] }
 
--- | /O(N)./ Compute the list of Z-function states for a given input.
+-- | /O(N)./ Compute the list of prefix-function states for a given input.
 zTraverse :: Eq a => [a] -> [ZState a]
 zTraverse [] = []
 zTraverse xw@(_:xs) = let
-        pz = ZState{zTail = xw, zLength = error "nil", zPrev = pzs}
+        pz = ZState{zTail = xw, zLength = 0, zPrev = pzs}
         z = ZState{zTail = xs, zLength = 0, zPrev = pzs}
         pzs = pz:zs
         zs = z:go z xs
@@ -54,9 +54,9 @@ zTraverse xw@(_:xs) = let
             | zl == 0 = ZState{zTail = xs, zLength = 0, zPrev = zpw}
             | otherwise = recurse zp x xs
 
--- | /O(N) and O(N) calls to the predicate./ Compute the list of Z-function
--- states using a given equality predicate. See "Data.List.Zalgo.zFunBy" for a
--- detailed explanation of what predicates are allowed.
+-- | /O(N) and O(N) calls to the predicate./ Compute the list of prefix-function
+-- states using a given equality predicate. See "Data.List.Zalgo.prefixFunBy"
+-- for a detailed explanation of what predicates are allowed.
 zTraverseBy :: (a -> a -> Bool) -> [a] -> [ZState a]
 zTraverseBy eq [] = []
 zTraverseBy eq xw@(_:xs) = let
@@ -78,8 +78,8 @@ zTraverseBy eq xw@(_:xs) = let
 -- used to avoid the 'Eq' constraint
 data GenericZState i a = GenericZState { gzTail :: [a], gzLength :: Maybe i, gzPrev :: [GenericZState i a] }
 
--- | /O(N) and O(N) plus-1's./ Compute the list of Z-function states using a
--- given number type.
+-- | /O(N) and O(N) plus-1's./ Compute the list of prefix-function states using
+-- a given number type.
 gzTraverse :: (Num i, Eq a) => [a] -> [GenericZState i a]
 gzTraverse [] = []
 gzTraverse xw@(_:xs) = let
@@ -98,7 +98,8 @@ gzTraverse xw@(_:xs) = let
             | otherwise = recurse zp x xs
 
 -- | /O(N), O(N) calls to the predicate, and O(N) plus-1's./ Compute the list of
--- Z-function states using a given number type and a given equality predicate.
+-- prefix-function states using a given number type and a given equality
+-- predicate.
 gzTraverseBy :: Num i => (a -> a -> Bool) -> [a] -> [GenericZState i a]
 gzTraverseBy eq [] = []
 gzTraverseBy eq xw@(_:xs) = let

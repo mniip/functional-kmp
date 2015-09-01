@@ -7,10 +7,10 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- A few efficient list-processing functions using the Z-function, which is
+-- A few efficient list-processing functions using the prefix-function, which is
 -- defined as:
 --
--- > (z xs) !! i
+-- > (prefixFun xs) !! i
 --
 -- is the length of the largest proper substring of @xs@ ending at position @i@,
 -- such that it equals the beginning of @xs@.
@@ -28,22 +28,22 @@
 
 module Data.List.Zalgo
     (
-        zFun,
+        prefixFun,
         isInfixOf,
         indexOf,
 
         -- * Custom predicates
         -- $predicates
-        zFunBy,
+        prefixFunBy,
         isInfixBy,
         indexBy,
 
         -- * Generic functions
         -- $generic
-        genericZFun,
+        genericPrefixFun,
         genericIndexOf,
 
-        genericZFunBy,
+        genericPrefixFunBy,
         genericIndexBy
     )
     where
@@ -55,9 +55,9 @@ import Data.List.Zalgo.Internal
 joinLists :: [a] -> [a] -> [Maybe a]
 joinLists n h = map Just n ++ Nothing:map Just h
 
--- | /O(N)./ Compute the Z-function for a list.
-zFun :: Eq a => [a] -> [Int]
-zFun xs = map zLength $ zTraverse xs
+-- | /O(N)./ Compute the prefix-function for a list.
+prefixFun :: Eq a => [a] -> [Int]
+prefixFun xs = map zLength $ zTraverse xs
 
 -- | /O(N+H)./ @isInfixOf needle haystack@ tests whether needle is fully
 -- contained somewhere in haystack.
@@ -67,7 +67,7 @@ isInfixOf n h = isJust $ indexOf n h
 -- | /O(N+H)./ @indexOf needle haystack@ returns the index at which needle
 -- is found in haystack, or Nothing if it's not.
 indexOf :: Eq a => [a] -> [a] -> Maybe Int
-indexOf n h = go 0 $ zFun $ joinLists n h
+indexOf n h = go 0 $ prefixFun $ joinLists n h
     where
         ln = length n
         go n [] = Nothing
@@ -88,10 +88,10 @@ indexOf n h = go 0 $ zFun $ joinLists n h
 --
 -- If these laws do not hold, the behavior is undefined.
 
--- | /O(N) and O(N) calls to the predicate./ Compute the Z-function using a
+-- | /O(N) and O(N) calls to the predicate./ Compute the prefix-function using a
 -- custom equality predicate.
-zFunBy :: (a -> a -> Bool) -> [a] -> [Int]
-zFunBy eq xs = map zLength $ zTraverseBy eq xs
+prefixFunBy :: (a -> a -> Bool) -> [a] -> [Int]
+prefixFunBy eq xs = map zLength $ zTraverseBy eq xs
 
 -- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'isInfixOf' using a
 -- custom equality predicate.
@@ -101,7 +101,7 @@ isInfixBy eq n h = isJust $ indexBy eq n h
 -- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'indexOf' using a
 -- cusom equality predicate.
 indexBy :: (a -> a -> Bool) -> [a] -> [a] -> Maybe Int
-indexBy eq n h = go 0 $ zFunBy (maybeEq eq) $ joinLists n h
+indexBy eq n h = go 0 $ prefixFunBy (maybeEq eq) $ joinLists n h
     where
         ln = length n
         go n [] = Nothing
@@ -116,11 +116,11 @@ indexBy eq n h = go 0 $ zFunBy (maybeEq eq) $ joinLists n h
 -- Some of the functions are generalized over the type of the numbers they
 -- return, but keep in mind that the amount of arithmetic operations is linear.
 
-genericZFun :: (Num i, Eq a) => [a] -> [i]
-genericZFun xs = map (fromMaybe 0 . gzLength) $ gzTraverse xs
+genericPrefixFun :: (Num i, Eq a) => [a] -> [i]
+genericPrefixFun xs = map (fromMaybe 0 . gzLength) $ gzTraverse xs
 
 genericIndexOf :: (Eq i, Num i, Eq a) => [a] -> [a] -> Maybe i
-genericIndexOf n h = go 0 $ genericZFun $ joinLists n h
+genericIndexOf n h = go 0 $ genericPrefixFun $ joinLists n h
     where
         ln = genericLength n
         go n [] = Nothing
@@ -128,11 +128,11 @@ genericIndexOf n h = go 0 $ genericZFun $ joinLists n h
             | l == ln = Just (n - ln - ln)
             | otherwise = n `seq` go (n + 1) ls
 
-genericZFunBy :: Num i => (a -> a -> Bool) -> [a] -> [i]
-genericZFunBy eq xs = map (fromMaybe 0 . gzLength) $ gzTraverseBy eq xs
+genericPrefixFunBy :: Num i => (a -> a -> Bool) -> [a] -> [i]
+genericPrefixFunBy eq xs = map (fromMaybe 0 . gzLength) $ gzTraverseBy eq xs
 
 genericIndexBy :: (Eq i, Num i) => (a -> a -> Bool) -> [a] -> [a] -> Maybe i
-genericIndexBy eq n h = go 0 $ genericZFunBy (maybeEq eq) $ joinLists n h
+genericIndexBy eq n h = go 0 $ genericPrefixFunBy (maybeEq eq) $ joinLists n h
     where
         ln = genericLength n
         go n [] = Nothing
