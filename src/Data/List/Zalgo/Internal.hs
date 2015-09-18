@@ -30,7 +30,7 @@ module Data.List.Zalgo.Internal
 
 import Data.Maybe
 
--- | A state of the Z-function computation. 'zTail' points to the tail of the
+-- | A state of the prefix-function computation. 'zTail' points to the tail of the
 -- input at the state's position, 'zLength' is the value of the prefix-function,
 -- and 'zPrev' is a reference to the list of 'ZState's starting from position
 -- described by 'zLength'.
