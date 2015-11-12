@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Data.List.Zalgo
+-- Module      :  Data.List.Kmp
 -- Copyright   :  (C) 2015 mniip
 -- License     :  BSD3
 -- Maintainer  :  mniip <mniip@mniip.com>
@@ -26,7 +26,7 @@
 -- their length, 4.
 --------------------------------------------------------------------------------
 
-module Data.List.Zalgo
+module Data.List.Kmp
     (
         prefixFun,
         isInfixOf,
@@ -50,35 +50,38 @@ module Data.List.Zalgo
 
 import Data.List hiding (isInfixOf)
 import Data.Maybe
-import Data.List.Zalgo.Internal
+import Data.List.Kmp.Internal
 
 joinLists :: [a] -> [a] -> [Maybe a]
 joinLists n h = map Just n ++ Nothing:map Just h
 
+maybeEq :: (a -> a -> Bool) -> Maybe a -> Maybe a -> Bool
+maybeEq eq Nothing Nothing = True
+maybeEq eq (Just a) (Just b) = a `eq` b
+maybeEq eq _ _ = False
+
 -- | /O(N)./ Compute the prefix-function for a list.
 prefixFun :: Eq a => [a] -> [Int]
-prefixFun xs = map zLength $ zTraverse xs
+prefixFun xs = map kmpLength $ kmpTraverse xs
 
 -- | /O(N+H)./ @isInfixOf needle haystack@ tests whether needle is fully
 -- contained somewhere in haystack.
 isInfixOf :: Eq a => [a] -> [a] -> Bool
-isInfixOf n h = isJust $ indexOf n h
+isInfixOf n h = any (== ln) $ prefixFun $ joinLists n h
+    where
+        ln = length n
 
 -- | /O(N+H)./ @indexOf needle haystack@ returns the index at which needle
 -- is found in haystack, or Nothing if it's not.
 indexOf :: Eq a => [a] -> [a] -> Maybe Int
-indexOf n h = go 0 $ prefixFun $ joinLists n h
+indexOf n h = fmap (subtract ln . subtract ln) $ elemIndex ln $ prefixFun $ joinLists n h
     where
         ln = length n
-        go n [] = Nothing
-        go n (l:ls)
-            | l == ln = Just (n - ln - ln)
-            | otherwise = n `seq` go (n + 1) ls
 
 -- $predicates
 --
 -- The @...By@ set of functions takes a custom equality predicate, and due to
--- the optimized nature of the algorithm, passed predicate must conform to
+-- the optimized nature of the algorithm, the passed predicate must conform to
 -- some laws:
 -- 
 -- > Commutativity: a == b  =>  b == a
@@ -91,25 +94,21 @@ indexOf n h = go 0 $ prefixFun $ joinLists n h
 -- | /O(N) and O(N) calls to the predicate./ Compute the prefix-function using a
 -- custom equality predicate.
 prefixFunBy :: (a -> a -> Bool) -> [a] -> [Int]
-prefixFunBy eq xs = map zLength $ zTraverseBy eq xs
+prefixFunBy eq xs = map kmpLength $ kmpTraverseBy eq xs
 
 -- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'isInfixOf' using a
 -- custom equality predicate.
 isInfixBy :: (a -> a -> Bool) -> [a] -> [a] -> Bool
-isInfixBy eq n h = isJust $ indexBy eq n h
-
--- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'indexOf' using a
--- cusom equality predicate.
-indexBy :: (a -> a -> Bool) -> [a] -> [a] -> Maybe Int
-indexBy eq n h = go 0 $ prefixFunBy (maybeEq eq) $ joinLists n h
+isInfixBy eq n h = any (== ln) $ prefixFunBy (maybeEq eq) $ joinLists n h
     where
         ln = length n
-        go n [] = Nothing
-        go n (l:ls)
-            | l == ln = Just (n - ln - ln)
-            | otherwise = n `seq` go (n + 1) ls
-        maybeEq eq (Just x) (Just y) = x `eq` y
-        maybeEq _ _ _ = False
+
+-- | /O(N+H) and O(N+H) calls to the predicate./ Compute 'indexOf' using a
+-- custom equality predicate.
+indexBy :: (a -> a -> Bool) -> [a] -> [a] -> Maybe Int
+indexBy eq n h = fmap (subtract ln . subtract ln) $ elemIndex ln $ prefixFunBy (maybeEq eq) $ joinLists n h
+    where
+        ln = length n
 
 -- $generic
 --
@@ -117,7 +116,7 @@ indexBy eq n h = go 0 $ prefixFunBy (maybeEq eq) $ joinLists n h
 -- return, but keep in mind that the amount of arithmetic operations is linear.
 
 genericPrefixFun :: (Num i, Eq a) => [a] -> [i]
-genericPrefixFun xs = map (fromMaybe 0 . gzLength) $ gzTraverse xs
+genericPrefixFun xs = map (fromMaybe 0 . gKmpLength) $ gKmpTraverse xs
 
 genericIndexOf :: (Eq i, Num i, Eq a) => [a] -> [a] -> Maybe i
 genericIndexOf n h = go 0 $ genericPrefixFun $ joinLists n h
@@ -126,10 +125,10 @@ genericIndexOf n h = go 0 $ genericPrefixFun $ joinLists n h
         go n [] = Nothing
         go n (l:ls)
             | l == ln = Just (n - ln - ln)
-            | otherwise = n `seq` go (n + 1) ls
+            | otherwise = go (n + 1) ls
 
 genericPrefixFunBy :: Num i => (a -> a -> Bool) -> [a] -> [i]
-genericPrefixFunBy eq xs = map (fromMaybe 0 . gzLength) $ gzTraverseBy eq xs
+genericPrefixFunBy eq xs = map (fromMaybe 0 . gKmpLength) $ gKmpTraverseBy eq xs
 
 genericIndexBy :: (Eq i, Num i) => (a -> a -> Bool) -> [a] -> [a] -> Maybe i
 genericIndexBy eq n h = go 0 $ genericPrefixFunBy (maybeEq eq) $ joinLists n h
@@ -138,6 +137,4 @@ genericIndexBy eq n h = go 0 $ genericPrefixFunBy (maybeEq eq) $ joinLists n h
         go n [] = Nothing
         go n (l:ls)
             | l == ln = Just (n - ln - ln)
-            | otherwise = n `seq` go (n + 1) ls
-        maybeEq eq (Just x) (Just y) = x `eq` y
-        maybeEq _ _ _ = False
+            | otherwise = go (n + 1) ls
